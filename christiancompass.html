@@ -1,0 +1,370 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Christian Denominations Quiz</title>
+<style>
+:root {
+  --bg:#10131b; --panel:#1a1f2b; --light:#252c3a;
+  --text:#f0f2f8; --muted:#9ba5b8; --accent:#8b9cff;
+  --green:#62d6c5; --border:#303849;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;background:var(--bg);color:var(--text);
+  font-family:system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+.container{width:min(900px,94%);margin:auto;padding:30px 0 55px}
+header{text-align:center;margin-bottom:30px}
+header h1{font-size:clamp(1.8rem,5vw,2.6rem);margin:0 0 8px}
+header p,.muted{color:var(--muted)}
+.panel{
+  background:var(--panel);border:1px solid var(--border);
+  border-radius:18px;padding:clamp(20px,4vw,34px);
+}
+.hidden{display:none!important}
+button{font:inherit;cursor:pointer}
+.primary,.secondary{
+  border-radius:10px;padding:12px 20px;font-weight:650;
+}
+.primary{background:var(--accent);color:#10131b;border:0}
+.secondary{background:var(--light);color:var(--text);border:1px solid var(--border)}
+button:disabled{opacity:.35;cursor:not-allowed}
+.intro{text-align:center}
+.axis-grid{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));
+  gap:12px;margin:25px 0;text-align:left
+}
+.axis-card{background:var(--light);padding:16px;border-radius:12px}
+.axis-card h3{font-size:.95rem;color:var(--accent);margin:0 0 8px}
+.axis-card p{font-size:.85rem;color:var(--muted);margin:0;line-height:1.5}
+.progress-label{display:flex;justify-content:space-between;color:var(--muted);font-size:.85rem;margin-bottom:9px}
+.track{height:8px;background:var(--light);border-radius:20px;overflow:hidden}
+.fill{height:100%;background:var(--accent);width:0}
+.category{
+  display:inline-block;color:var(--green);background:#62d6c51a;
+  border:1px solid #62d6c533;border-radius:20px;padding:5px 11px;
+  font-size:.8rem;margin:20px 0 12px
+}
+.question{font-size:clamp(1.2rem,3vw,1.6rem);line-height:1.45;margin:0 0 24px}
+.answers{display:grid;gap:10px}
+.answer{
+  width:100%;text-align:left;background:var(--light);color:var(--text);
+  border:1px solid var(--border);border-radius:10px;padding:14px 16px
+}
+.answer:hover,.answer.selected{border-color:var(--accent);background:#8b9cff20}
+.nav{display:flex;justify-content:space-between;gap:12px;margin-top:25px}
+.results-title{text-align:center;margin:0 0 8px}
+.results-subtitle{text-align:center;color:var(--muted);margin-bottom:25px}
+.chart{max-width:600px;margin:auto}
+canvas{width:100%;display:block;aspect-ratio:1;background:#131722;border-radius:12px;border:1px solid var(--border)}
+.scores{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:12px;margin:22px 0}
+.score-card{background:var(--light);padding:16px;border-radius:12px;text-align:center}
+.score-card .label{font-size:.8rem;color:var(--muted)}
+.score-card .value{font-size:1.6rem;font-weight:750;margin:5px 0}
+.metric{margin:28px 0}
+.metric-head{display:flex;justify-content:space-between;margin-bottom:10px}
+.metric-head span{color:var(--green);font-weight:700}
+.metric-labels{display:flex;justify-content:space-between;gap:10px;font-size:.75rem;color:var(--muted);margin-bottom:8px}
+.metric-track{height:14px;background:var(--light);border-radius:20px;position:relative;overflow:hidden}
+.metric-center{position:absolute;left:50%;top:0;bottom:0;width:2px;background:#fff6;z-index:2}
+.metric-fill{position:absolute;top:0;height:100%;background:var(--green);border-radius:20px}
+.summary{background:var(--light);padding:18px;border-radius:12px;line-height:1.7;color:var(--muted)}
+.actions{text-align:center;margin-top:25px}
+footer{text-align:center;color:var(--muted);font-size:.8rem;margin-top:30px}
+@media(max-width:500px){.container{padding-top:20px}.panel{border-radius:14px}.answer{padding:13px}}
+</style>
+</head>
+<body>
+<div class="container">
+<header>
+  <h1>Christian Denominations Quiz</h1>
+  <p>Explore your theological beliefs across three dimensions.</p>
+</header>
+
+<section id="intro" class="panel intro">
+  <h2>Discover Your Theological Position</h2>
+  <p>Answer 30 statements about Christian theology, church authority, and Scripture.</p>
+  <div class="axis-grid">
+    <div class="axis-card">
+      <h3>Modernism ↔ Traditionalism</h3>
+      <p>Traditional Christian doctrine versus modern theological approaches.</p>
+    </div>
+    <div class="axis-card">
+      <h3>Low ↔ High Church Authority</h3>
+      <p>Congregational independence versus institutional and ecclesiastical authority.</p>
+    </div>
+    <div class="axis-card">
+      <h3>Scripture Interpretation</h3>
+      <p>Contextual and symbolic approaches versus literal interpretation and inerrancy.</p>
+    </div>
+  </div>
+  <p class="muted">This quiz is for personal reflection, not an official denominational classification.</p>
+  <button class="primary" onclick="startQuiz()">Begin Quiz</button>
+</section>
+
+<section id="quiz" class="panel hidden">
+  <div class="progress-label">
+    <span id="counter"></span><span id="percent"></span>
+  </div>
+  <div class="track"><div id="progress" class="fill"></div></div>
+  <div id="category" class="category"></div>
+  <h2 id="question" class="question"></h2>
+  <div id="answers" class="answers"></div>
+  <div class="nav">
+    <button id="back" class="secondary" onclick="previous()">Back</button>
+    <button id="next" class="primary" onclick="next()" disabled>Next</button>
+  </div>
+</section>
+
+<section id="results" class="panel hidden">
+  <h2 class="results-title">Your Results</h2>
+  <p class="results-subtitle">Your position across the three measurements.</p>
+  <div class="chart"><canvas id="canvas" width="600" height="600"></canvas></div>
+  <div class="scores">
+    <div class="score-card"><div class="label">X Coordinate</div><div id="xs" class="value"></div><div class="label">Modernism / Traditionalism</div></div>
+    <div class="score-card"><div class="label">Y Coordinate</div><div id="ys" class="value"></div><div class="label">Church Authority</div></div>
+    <div class="score-card"><div class="label">Scripture</div><div id="ss" class="value"></div><div class="label">Interpretation</div></div>
+  </div>
+  <div class="metric">
+    <div class="metric-head"><strong>Scripture Interpretation</strong><span id="metricValue"></span></div>
+    <div class="metric-labels"><span>−10 Contextual / Symbolic</span><span>+10 Literal / Inerrant</span></div>
+    <div class="metric-track">
+      <div class="metric-center"></div>
+      <div id="metricFill" class="metric-fill"></div>
+    </div>
+  </div>
+  <div id="summary" class="summary"></div>
+  <div class="actions"><button class="primary" onclick="restart()">Retake Quiz</button></div>
+</section>
+<footer>Christian Denominations Quiz · Educational and personal reflection</footer>
+</div>
+
+<script>
+// direction +1 means agreement leans toward the positive end.
+// direction -1 means agreement leans toward the negative end.
+// Each category has 10 questions.
+
+const questions = [
+  // X AXIS: MODERNISM (-) / TRADITIONALISM (+)
+  {text:"The historic creeds of Christianity remain essential guides for Christian belief.",category:"x",direction:+1},
+  {text:"Christian doctrines should be substantially revised when they conflict with modern understandings of the world.",category:"x",direction:-1},
+  {text:"The core teachings of Christianity should remain consistent with the beliefs of the early Church.",category:"x",direction:+1},
+  {text:"Traditional Christian teachings should be reinterpreted to fit contemporary social values.",category:"x",direction:-1},
+  {text:"The supernatural events described in the traditional Christian faith should be accepted as real events.",category:"x",direction:+1},
+  {text:"Modern scholarship should be allowed to reshape long-established Christian doctrines.",category:"x",direction:-1},
+  {text:"Historic Christian teachings about God, Christ, and salvation should be preserved rather than replaced.",category:"x",direction:+1},
+  {text:"Christianity should be open to rejecting traditional doctrines that no longer seem reasonable today.",category:"x",direction:-1},
+  {text:"The teachings passed down through historic Christianity deserve a strong presumption of trust.",category:"x",direction:+1},
+  {text:"The Church should prioritize developing new theological perspectives over maintaining traditional formulations.",category:"x",direction:-1},
+
+  // Y AXIS: LOW (-) / HIGH (+) CHURCH AUTHORITY
+  {text:"Bishops and other established church leaders should have authority over multiple congregations.",category:"y",direction:+1},
+  {text:"Each local congregation should be largely independent in its governance.",category:"y",direction:-1},
+  {text:"The decisions of historic ecumenical councils should carry binding authority for Christians.",category:"y",direction:+1},
+  {text:"No central church institution should have authority to determine doctrine for all congregations.",category:"y",direction:-1},
+  {text:"A recognized teaching office within the Church is necessary to resolve major doctrinal disputes.",category:"y",direction:+1},
+  {text:"Church members should have the final say in the governance of their own congregation.",category:"y",direction:-1},
+  {text:"Apostolic succession or continuity of ordained church leadership is important to the Church's authority.",category:"y",direction:+1},
+  {text:"Church traditions and official leaders should not be able to impose beliefs beyond what Scripture clearly teaches.",category:"y",direction:-1},
+  {text:"The wider Church should have the authority to discipline congregations that depart from its established teachings.",category:"y",direction:+1},
+  {text:"Church authority should be decentralized, with local communities making most important decisions.",category:"y",direction:-1},
+
+  // SCRIPTURE: CONTEXTUAL / SYMBOLIC (-) / LITERAL / INERRANT (+)
+  {text:"The Bible is without error in everything it teaches.",category:"scripture",direction:+1},
+  {text:"Many biblical passages should primarily be understood symbolically rather than as literal descriptions.",category:"scripture",direction:-1},
+  {text:"When the Bible describes an event as happening, it should generally be understood as historical unless the genre indicates otherwise.",category:"scripture",direction:+1},
+  {text:"The historical and cultural context of a biblical passage can change how its words should be understood today.",category:"scripture",direction:-1},
+  {text:"The plain meaning of Scripture should be preferred whenever it is reasonably clear.",category:"scripture",direction:+1},
+  {text:"Some biblical narratives communicate spiritual truths without necessarily describing events that occurred exactly as written.",category:"scripture",direction:-1},
+  {text:"Every part of the Bible is trustworthy and does not teach falsehood.",category:"scripture",direction:+1},
+  {text:"Metaphorical or allegorical interpretations are often more appropriate than literal readings of biblical passages.",category:"scripture",direction:-1},
+  {text:"Biblical statements should be understood according to their ordinary meaning unless there is clear reason to read them figuratively.",category:"scripture",direction:+1},
+  {text:"Understanding the author's historical context is more important than insisting that every passage has a straightforward literal meaning.",category:"scripture",direction:-1}
+];
+
+const choices=[
+  {label:"Strongly Agree",value:2},
+  {label:"Agree",value:1},
+  {label:"Neutral / Unsure",value:0},
+  {label:"Disagree",value:-1},
+  {label:"Strongly Disagree",value:-2}
+];
+
+let index=0;
+let answers=Array(questions.length).fill(null);
+let currentResults=null;
+
+const $=id=>document.getElementById(id);
+const clamp=(n,min,max)=>Math.max(min,Math.min(max,n));
+const fmt=n=>(n>=0?"+":"")+n.toFixed(1);
+
+function startQuiz(){
+  $("intro").classList.add("hidden");
+  $("results").classList.add("hidden");
+  $("quiz").classList.remove("hidden");
+  index=0;
+  renderQuestion();
+}
+
+function renderQuestion(){
+  const q=questions[index];
+  const pct=Math.round((index+1)/questions.length*100);
+  $("counter").textContent=`Question ${index+1} of ${questions.length}`;
+  $("percent").textContent=`${pct}%`;
+  $("progress").style.width=pct+"%";
+  $("question").textContent=q.text;
+
+  $("category").textContent={
+    x:"Modernism / Traditionalism",
+    y:"Church Authority",
+    scripture:"Scripture Interpretation"
+  }[q.category];
+
+  $("answers").innerHTML="";
+  choices.forEach(choice=>{
+    const btn=document.createElement("button");
+    btn.className="answer";
+    btn.textContent=choice.label;
+    if(answers[index]===choice.value)btn.classList.add("selected");
+    btn.onclick=()=>{
+      answers[index]=choice.value;
+      document.querySelectorAll(".answer").forEach(b=>b.classList.remove("selected"));
+      btn.classList.add("selected");
+      $("next").disabled=false;
+    };
+    $("answers").appendChild(btn);
+  });
+
+  $("back").disabled=index===0;
+  $("next").textContent=index===questions.length-1?"See Results":"Next";
+  $("next").disabled=answers[index]===null;
+}
+
+function previous(){
+  if(index>0){index--;renderQuestion();}
+}
+
+function next(){
+  if(answers[index]===null)return;
+  if(index<questions.length-1){index++;renderQuestion();}
+  else calculate();
+}
+
+function calculate(){
+  const raw={x:0,y:0,scripture:0};
+  questions.forEach((q,i)=>{
+    raw[q.category]+=answers[i]*q.direction;
+  });
+  const scores={
+    x:clamp(raw.x/2,-10,10),
+    y:clamp(raw.y/2,-10,10),
+    scripture:clamp(raw.scripture/2,-10,10)
+  };
+  showResults(scores);
+}
+
+function showResults(s){
+  currentResults=s;
+  $("quiz").classList.add("hidden");
+  $("results").classList.remove("hidden");
+  $("xs").textContent=fmt(s.x);
+  $("ys").textContent=fmt(s.y);
+  $("ss").textContent=fmt(s.scripture);
+  $("metricValue").textContent=fmt(s.scripture);
+
+  const fill=$("metricFill");
+  fill.style.width=Math.abs(s.scripture)/10*50+"%";
+  fill.style.left=s.scripture>=0?"50%":"auto";
+  fill.style.right=s.scripture<0?"50%":"auto";
+
+  const tendency=(v,neg,pos,mid)=>
+    v<-3?neg:v>3?pos:mid;
+
+  $("summary").innerHTML=
+    `<strong>Your theological profile</strong><br><br>
+    <strong>X:</strong> ${fmt(s.x)} — ${
+      tendency(s.x,"Modernist-leaning","Traditionalist-leaning","Moderate / balanced")
+    }<br>
+    <strong>Y:</strong> ${fmt(s.y)} — ${
+      tendency(s.y,"Low Church Authority-leaning","High Church Authority-leaning","Moderate / balanced authority")
+    }<br>
+    <strong>Scripture:</strong> ${fmt(s.scripture)} — ${
+      tendency(s.scripture,"Contextual / Symbolic-leaning","Literal / Inerrant-leaning","Moderate / balanced interpretation")
+    }<br><br>
+    These results describe your responses to this quiz. They do not definitively identify your denomination.`;
+
+  drawGrid(s.x,s.y);
+}
+
+function drawGrid(x,y){
+  const c=$("canvas"),ctx=c.getContext("2d");
+  const size=600,pad=65,plot=size-2*pad;
+  c.width=size;c.height=size;
+  ctx.fillStyle="#131722";ctx.fillRect(0,0,size,size);
+
+  const px=v=>pad+(v+10)/20*plot;
+  const py=v=>pad+(10-v)/20*plot;
+
+  ctx.strokeStyle="#2b3342";ctx.lineWidth=1;
+  for(let i=-10;i<=10;i+=2){
+    ctx.beginPath();ctx.moveTo(px(i),pad);ctx.lineTo(px(i),size-pad);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(pad,py(i));ctx.lineTo(size-pad,py(i));ctx.stroke();
+  }
+
+  ctx.strokeStyle="#8993a8";ctx.lineWidth=2;
+  ctx.beginPath();ctx.moveTo(px(0),pad);ctx.lineTo(px(0),size-pad);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(pad,py(0));ctx.lineTo(size-pad,py(0));ctx.stroke();
+
+  ctx.fillStyle="#9ba5b8";ctx.font="12px system-ui";
+  ctx.textAlign="center";ctx.textBaseline="middle";
+  for(let i=-10;i<=10;i+=2){
+    ctx.fillText(i,px(i),size-pad+18);
+    ctx.fillText(i,pad-20,py(i));
+  }
+
+  ctx.fillStyle="#f0f2f8";ctx.font="bold 13px system-ui";
+  ctx.textAlign="left";ctx.fillText("Modernism",pad,size-20);
+  ctx.textAlign="right";ctx.fillText("Traditionalism",size-pad,size-20);
+
+  ctx.save();ctx.translate(18,pad);ctx.rotate(-Math.PI/2);
+  ctx.textAlign="left";ctx.fillText("High Church Authority",0,0);ctx.restore();
+
+  ctx.save();ctx.translate(18,size-pad);ctx.rotate(-Math.PI/2);
+  ctx.textAlign="right";ctx.fillText("Low Church Authority",0,0);ctx.restore();
+
+  const X=px(x),Y=py(y);
+  ctx.beginPath();ctx.arc(X,Y,15,0,Math.PI*2);
+  ctx.fillStyle="#8b9cff30";ctx.fill();
+
+  ctx.beginPath();ctx.arc(X,Y,8,0,Math.PI*2);
+  ctx.fillStyle="#8b9cff";ctx.fill();
+  ctx.strokeStyle="#fff";ctx.lineWidth=2;ctx.stroke();
+
+  ctx.fillStyle="#fff";ctx.font="bold 13px system-ui";
+  ctx.textAlign=X>size/2?"right":"left";
+  ctx.fillText(`(${fmt(x)}, ${fmt(y)})`,X+(X>size/2?-14:14),Y+(Y<90?25:-15));
+}
+
+function restart(){
+  index=0;
+  answers=Array(questions.length).fill(null);
+  currentResults=null;
+  $("results").classList.add("hidden");
+  $("intro").classList.remove("hidden");
+}
+
+window.addEventListener("resize",()=>{
+  if(currentResults)drawGrid(currentResults.x,currentResults.y);
+});
+
+// Verify question counts.
+["x","y","scripture"].forEach(category=>{
+  const count=questions.filter(q=>q.category===category).length;
+  if(count!==10)console.warn(category+" has "+count+" questions");
+});
+</script>
+</body>
+</html>
